@@ -48,6 +48,11 @@ export const FIELDS = {
     sealStatus: "Seal status",
     sealPhoto: "Seal photo",
     returnReason: "Return reason",
+    labelVerified: "Label verified",
+    soldCount: "Sold count",
+    unsoldCount: "Unsold count",
+    tracking: "Tracking #",
+    shipBucket: "Ship bucket",
     notes: "Notes",
     currentSafe: "Current safe",
     show: "Show",
@@ -56,6 +61,7 @@ export const FIELDS = {
     returnedAt: "Returned at",
     case: "Case",
   },
+
   safe: {
     name: "Safe name",
     type: "Type",
@@ -179,7 +185,16 @@ export interface LogMovementInput {
   receivedById?: string | null;
   notes?: string;
   returnReason?: string | null;
+  // Context-specific fields, persisted onto the Game where relevant.
+  streamerId?: string | null; // Delegate
+  showId?: string | null; // Delegate / Completed handoff
+  labelVerified?: boolean | null; // Completed handoff
+  soldCount?: number | null; // Completed handoff
+  unsoldCount?: number | null; // Completed handoff
+  shipBucket?: string | null; // Ship
+  tracking?: string | null; // Ship
 }
+
 
 export async function logMovement(input: LogMovementInput) {
   const resultingStatus = MOVEMENT_STATUS_MAP[input.type];
@@ -210,7 +225,19 @@ export async function logMovement(input: LogMovementInput) {
   }
   if (input.returnReason) gameFields[FIELDS.game.returnReason] = input.returnReason;
 
+  // Context-specific fields by move type.
+  if (input.streamerId) gameFields[FIELDS.game.streamer] = [input.streamerId];
+  if (input.showId) gameFields[FIELDS.game.show] = [input.showId];
+  if (input.labelVerified != null)
+    gameFields[FIELDS.game.labelVerified] = input.labelVerified;
+  if (input.soldCount != null) gameFields[FIELDS.game.soldCount] = input.soldCount;
+  if (input.unsoldCount != null)
+    gameFields[FIELDS.game.unsoldCount] = input.unsoldCount;
+  if (input.shipBucket) gameFields[FIELDS.game.shipBucket] = input.shipBucket;
+  if (input.tracking) gameFields[FIELDS.game.tracking] = input.tracking;
+
   await updateRecord(TABLES.games, input.gameId, gameFields);
+
 
   return movement;
 }

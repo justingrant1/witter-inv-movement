@@ -59,23 +59,35 @@ export function GamePicker({
   return (
     <div>
       <input
-        autoFocus
-        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2.5 text-slate-100 focus:border-emerald-500 focus:outline-none"
+        className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-3 text-base text-slate-100 focus:border-emerald-500 focus:outline-none"
         placeholder="Search game # / title / seal ID…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        inputMode="search"
       />
-      <div className="mt-2 max-h-64 space-y-1 overflow-y-auto">
+      <div className="mt-2 max-h-80 space-y-1.5 overflow-y-auto overscroll-contain">
         {results.map((g) => (
           <button
             key={g.id}
+            type="button"
+            // onPointerUp fires reliably on touch even when a tiny drag is detected,
+            // avoiding the "scroll vs. tap" miss that plagued the old onClick-only rows.
+            onPointerUp={() => onChange(g.id)}
             onClick={() => onChange(g.id)}
-            className="flex w-full items-center justify-between rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-2.5 text-left hover:border-emerald-500"
+            className="flex w-full touch-manipulation select-none items-center justify-between gap-3 rounded-lg border border-slate-800 bg-slate-800/40 px-3 py-3.5 text-left transition-colors hover:border-emerald-500 active:border-emerald-500 active:bg-emerald-500/10"
           >
-            <span className="text-sm text-slate-100">
-              {g.number || "—"} · {g.title || "Untitled"}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium text-slate-100">
+                {g.number || "—"} · {g.title || "Untitled"}
+              </span>
+              <span className="mt-0.5 block truncate text-xs text-slate-500">
+                {g.currentSafeName || "no safe"}
+              </span>
             </span>
-            <span className={`text-xs ${statusColor(g.status)}`}>
+            <span className={`shrink-0 text-xs ${statusColor(g.status)}`}>
               {g.status || "—"}
             </span>
           </button>
@@ -87,3 +99,5 @@ export function GamePicker({
     </div>
   );
 }
+
+

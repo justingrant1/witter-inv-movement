@@ -39,8 +39,28 @@ export async function POST(req: NextRequest) {
       } as any);
     }
 
-    const movement = await logMovement({
+    // On Check-in, record the verified actual count + seal status so the
+    // Count check / High-value discrepancy formulas fire immediately.
+    if (type === "Check-in") {
+      const checkinFields: Record<string, unknown> = {};
+      if (
+        body.actualCount != null &&
+        body.actualCount !== "" &&
+        !Number.isNaN(Number(body.actualCount))
+      ) {
+        checkinFields[FIELDS.game.actualCount] = Number(body.actualCount);
+      }
+      if (body.sealStatus) checkinFields[FIELDS.game.sealStatus] = body.sealStatus;
+      if (Object.keys(checkinFields).length) {
+        await updateRecord(TABLES.games, gameId, checkinFields as any);
+      }
+    }
 
+
+    const toNum = (v: any) =>
+      v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null;
+
+    const movement = await logMovement({
       gameId,
       type,
       fromSafeId: body.fromSafeId || null,
@@ -49,7 +69,16 @@ export async function POST(req: NextRequest) {
       receivedById: body.receivedById || null,
       notes: body.notes || undefined,
       returnReason: body.returnReason || null,
+      streamerId: body.streamerId || null,
+      showId: body.showId || null,
+      labelVerified:
+        typeof body.labelVerified === "boolean" ? body.labelVerified : null,
+      soldCount: toNum(body.soldCount),
+      unsoldCount: toNum(body.unsoldCount),
+      shipBucket: body.shipBucket || null,
+      tracking: body.tracking || null,
     });
+
 
     return NextResponse.json({ ok: true, movementId: movement.id });
   } catch (err: any) {
